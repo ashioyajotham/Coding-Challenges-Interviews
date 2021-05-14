@@ -1,0 +1,36 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css"/>
+    <style>
+    .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+        .markdown-body {
+            padding: 15px;
+        }
+    }
+    </style>
+</head>
+<body class="markdown-body">
+<h1 id="sql-evaluator-starter-code-for-java-8">SQL Evaluator - Starter code for Java 8+</h1>
+<p>This includes code to parse the table and query JSON formats into Java objects (using the <a href="https://github.com/FasterXML/jackson">Jackson</a> library).</p>
+<p>Look at &quot;src/sql_evaluator/Main.java&quot; to get started.</p>
+<p>To build (requires Maven):</p>
+<pre><code>mvn compile
+</code></pre>
+<p>To run directly:</p>
+<pre><code>./sql_evaluator ../../examples ../../examples/cities-2.sql.json out.txt
+cat out.txt
+</code></pre>
+<p>To test against all the examples using the &quot;check&quot; tool:</p>
+<pre><code>../../check ./sql_evaluator -- ../../examples ../../examples/*.sql
+</code></pre>
+
+</body>
+</html>

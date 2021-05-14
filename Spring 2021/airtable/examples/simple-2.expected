@@ -1,0 +1,21 @@
+[
+    [["a1_name","str"],["age","int"],["a2_name","str"],["distance","int"]],
+    ["Alice",20,"Alice",25],
+    ["Alice",20,"Alice",32],
+    ["Alice",20,"Bob",25],
+    ["Alice",20,"Bob",32],
+    ["Alice",20,"Eve",25],
+    ["Alice",20,"Eve",32],
+    ["Bob",30,"Alice",25],
+    ["Bob",30,"Alice",32],
+    ["Bob",30,"Bob",25],
+    ["Bob",30,"Bob",32],
+    ["Bob",30,"Eve",25],
+    ["Bob",30,"Eve",32],
+    ["Eve",40,"Alice",25],
+    ["Eve",40,"Alice",32],
+    ["Eve",40,"Bob",25],
+    ["Eve",40,"Bob",32],
+    ["Eve",40,"Eve",25],
+    ["Eve",40,"Eve",32]
+]

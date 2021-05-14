@@ -1,0 +1,1 @@
+To run: python3 sql_evaluator <table-folder> <sql-json-file> <output-file>

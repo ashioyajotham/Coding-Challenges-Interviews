@@ -1,0 +1,224 @@
+#! /usr/bin/env python3
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import warnings
+
+with warnings.catch_warnings():
+    # Ignore warning about 'imp' being deprecated.
+    warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+    import imp
+
+import itertools
+import json
+import os
+import subprocess
+import sys
+import threading
+
+# We load 'sql-to-json' as a module, which causes Python to write the bytecode
+# to 'sql-to-jsonc'.  We don't want that because it clutters the folder.
+sys.dont_write_bytecode = True
+
+major, minor = sys.version_info[:2]
+if not ((major == 2 and minor >= 7) or (major == 3 and minor >= 2)):
+    sys.stderr.write(
+        "This program requires Python 2.7+ or 3.2+\n"
+        "You're trying to run it with Python {}.\n"
+        .format('.'.join(map(str, sys.version_info[:3]))))
+    sys.exit(1)
+
+if major == 2:
+    text = unicode
+    ints = (int, long)
+else:
+    text = str
+    ints = (int,)
+
+def main():
+    base_folder = os.path.dirname(__file__)
+    sql_to_json_path = os.path.join(base_folder, 'sql-to-json')
+    if not os.path.exists(sql_to_json_path):
+        sys.stderr.write("Unable to find \"sql-to-json\" tool at {}.".format(q(sql_to_json)))
+        raise sys.exit(1)
+
+    sql_to_json = imp.load_source('sql_to_json', sql_to_json_path)
+
+    args = sys.argv[1:]
+
+    try:
+        divider_pos = args.index('--')
+    except ValueError:
+        sys.stderr.write("Missing \"--\".\n")
+        raise sys.exit(1)
+
+    sql_evaluator_command = args[:divider_pos]
+    rest = args[divider_pos+1:]
+    if len(rest) < 2:
+        sys.stderr.write("Expecting 2 or more arguments after \"--\", got {}.\n".format(len(rest)))
+        raise sys.exit(1)
+    table_folder, sql_files = rest[0], rest[1:]
+
+    if len(sql_evaluator_command) < 1:
+        sys.stderr.write("Got zero arguments for <sql-evaluator-command...>.\n")
+        raise sys.exit(1)
+    if not os.path.isdir(table_folder):
+        sys.stderr.write("Bad value for <table-folder>: {} is not a folder.\n".format(q(table_folder)))
+        raise sys.exit(1)
+    if len(sql_files) < 1:
+        sys.stderr.write("Got zero arguments for <sql-files...>.\n")
+        raise sys.exit(1)
+
+
+    errors = 0
+    for sql_file in sql_files:
+        try:
+            check(sql_to_json, sql_evaluator_command, table_folder, sql_file)
+        except Fail as e:
+            sys.stdout.write("- Error: {}\n".format(e))
+            errors += 1
+
+    sys.stdout.write("Passed: {}/{}\n".format(len(sql_files) - errors, len(sql_files)))
+
+    if errors > 0:
+        sys.exit(2)
+
+def check(sql_to_json, sql_evaluator_command, table_folder, sql_file):
+    sys.stdout.write("Checking {}...\n".format(q(sql_file)))
+
+    if not sql_file.endswith('.sql'):
+        raise Fail("File name doesn't end with \".sql\".")
+    base_name = sql_file[:-len('.sql')]
+
+    sql_json_file_expected = base_name + '.sql.json'
+    expected_output_file = base_name + '.expected'
+    output_file = base_name + '.out'
+
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    # Convert the ".sql" to ".sql.json"
+    try:
+        sql_json_file = sql_to_json.translate_and_save_file(sql_file)
+    except sql_to_json.Fail as e:
+        raise Fail("sql-to-json failed: {}".format(e))
+
+    assert sql_json_file == sql_json_file_expected
+
+    # Run the sql-evaluator program.  Relay stdout and stderr lines with a prefix.
+    command = sql_evaluator_command[:] + [table_folder, sql_json_file, output_file]
+    sql_evaluator_exit_code = run_command(command, sys.stdout, 'stdout> ', 'stderr> ')
+
+    # Require a zero exit code to separate out cases where the program crashed.
+    if sql_evaluator_exit_code != 0:
+        raise Fail("Got non-zero exit code: {}.".format(sql_evaluator_exit_code))
+
+    if not os.path.exists(output_file):
+        raise Fail("Output file wasn't created: {}.".format(q(output_file)))
+    if not os.path.exists(expected_output_file):
+        raise Fail("Missing expected output file {}.".format(q(expected_output_file)))
+
+    try:
+        output = load_output(output_file)
+    except Fail as e:
+        raise Fail("Output file {}: {}".format(q(output_file), e))
+    try:
+        expected_output = load_output(expected_output_file)
+    except Fail as e:
+        raise Fail("Expected output file {}: {}".format(q(expected_output_file), e))
+
+    if isinstance(expected_output, text):
+        if not isinstance(output, text):
+            raise Fail("Expected a table, got an error message.  See {} vs {}."
+                .format(q(output_file), q(expected_output_file)))
+        if output != expected_output:
+            raise Fail("Expected error message doesn't match exactly.  See {} vs {}."
+                .format(q(output_file), q(expected_output_file)))
+    elif isinstance(expected_output, list):
+        if not isinstance(output, list):
+            raise Fail("Expected an error message, got a table.  See {} vs {}."
+                .format(q(output_file), q(expected_output_file)))
+        if output != expected_output:
+            raise Fail("Expected table doesn't match (ignoring row order).  See {} vs {}."
+                .format(q(output_file), q(expected_output_file)))
+    else:
+        raise AssertionError("unexpected result from load_output: {!r}".format(expected_output))
+
+# If it's an error message, return a unicode string.
+# If it's a JSON table, return the parsed table with the rows sorted
+def load_output(path):
+    with open(path, 'rb') as f:
+        raw = f.read()
+
+    try:
+        string = raw.decode('ascii')
+    except UnicodeDecodeError as e:
+        raise Fail("Not valid ASCII: {}".format(e))
+
+    if string.startswith('ERROR:'):
+        error_lines = string.splitlines()
+        if len(error_lines) != 1:
+            raise Fail("Expecting error messages to be exactly one line; got {} lines.".format(len(error_lines)))
+        return error_lines[0]
+
+    if string.startswith('['):
+        try:
+            j = json.loads(string)
+        except ValueError as e:
+            raise Fail("Starts with \"[\", so especting a JSON-formatted table, but it's not valid JSON: {}".format(e))
+
+        assert isinstance(j, list), repr(j)  # we checked that the string starts with "["
+        if len(j) == 0:
+            raise Fail("Empty table.  Expecting at least one element (the column headers).")
+
+        headers, rows = j[0], j[1:]
+
+        for n, row in enumerate(rows, start=1):
+            if not isinstance(row, list):
+                raise Fail("Row {}: expecting a JSON array, got: {}.".format(n, json.dumps(row)))
+
+        # Row order isn't significant in SQL (without "ORDER BY").
+        sorted_table = list(itertools.chain([headers], sorted(rows)))
+        return sorted_table
+
+    raise Fail("Must start with either \"ERROR:\" or \"[\".")
+
+class Fail(Exception):
+    pass
+
+def run_command(command, out, stdout_prefix, stderr_prefix):
+    p = subprocess.Popen(command, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    out_lock = threading.Lock()
+
+    threading.Thread(
+        target=relay_lines_with_prefix,
+        args=('stdout', p.stdout, out, out_lock, stdout_prefix)).start()
+
+    threading.Thread(
+        target=relay_lines_with_prefix,
+        args=('stderr', p.stderr, out, out_lock, stderr_prefix)).start()
+
+    return p.wait()
+
+def relay_lines_with_prefix(source_name, source, dest, dest_lock, prefix):
+    while True:
+        line = source.readline()
+        try:
+            line = line.decode('ascii')
+        except UnicodeDecodeError:
+            dest.write("Line read from {} wasn't valid ASCII: {!r}\n", source_name, line)
+            continue
+        if line == '':
+            break
+        with dest_lock:
+            dest.write(prefix)
+            dest.write(line)
+            if not line.endswith('\n'):
+                dest.write('\n')
+
+def q(s):
+    return json.dumps(s)
+
+
+if __name__ == '__main__':
+    main()

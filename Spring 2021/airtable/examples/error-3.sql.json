@@ -1,0 +1,20 @@
+{
+    "select": [
+        {"name": "name", "source": {"name": "name", "table": null}}
+    ],
+    "from": [
+        {"name": "cities", "source": "cities"}
+    ],
+    "where": [
+        {
+            "op": "=",
+            "left": {"column": {"name": "country", "table": null}},
+            "right": {"literal": "USA"}
+        },
+        {
+            "op": "!=",
+            "left": {"column": {"name": "name", "table": null}},
+            "right": {"column": {"name": "population", "table": null}}
+        }
+    ]
+}

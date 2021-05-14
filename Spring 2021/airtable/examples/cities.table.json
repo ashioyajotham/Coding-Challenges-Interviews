@@ -1,0 +1,19 @@
+[
+    [["name", "str"], ["country", "str"], ["population", "int"]],
+    ["New York", "USA", 8537],
+    ["Los Angeles", "USA", 3976],
+    ["Chicago", "USA", 2704],
+    ["Houston", "USA", 2303],
+    ["Washington DC", "USA", 681],
+    ["Toronto", "Canada", 2731],
+    ["Montreal", "Canada", 1701],
+    ["Calgary", "Canada", 1239],
+    ["Ottawa", "Canada", 934],
+    ["Mumbai", "India", 12442],
+    ["Delhi", "India", 11034],
+    ["Bangalore", "India", 8443],
+    ["Tokyo", "Japan", 13513],
+    ["Kanagawa", "Japan", 9127],
+    ["Osaka", "Japan", 8838],
+    ["Aichi", "Japan", 7484]
+]

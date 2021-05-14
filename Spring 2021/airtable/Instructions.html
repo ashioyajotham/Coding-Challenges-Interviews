@@ -1,0 +1,287 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css"/>
+    <style>
+    .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+        .markdown-body {
+            padding: 15px;
+        }
+    }
+    </style>
+</head>
+<body class="markdown-body">
+<h1 id="programming-assignment-sql-evaluator">Programming Assignment: SQL Evaluator</h1>
+<h2 id="getting-started">Getting started</h2>
+<p>To develop locally (recommended):</p>
+<ol>
+<li>Clone the git repo (click &quot;Use local IDE (via Git)&quot; in the top right corner).</li>
+<li>Make changes to the starter code and test locally.</li>
+<li>Push commits to the git remote.</li>
+</ol>
+<p>To help keep our review process anonymous, please do not include any personally identifiable information (such as your name) in your submitted code.</p>
+<h2 id="assignment-details">Assignment details</h2>
+<p>Write a command-line program that evaluates simple SQL queries.</p>
+<p>Your program doesn't have to parse SQL directly.  We've provided a tool (<code>sql-to-json</code>) that converts <a href="#simplified-sql">our subset of SQL</a> into a <a href="#json-formatted-sql">JSON-based format</a> for your program to load.</p>
+<pre><code>$ ./YOUR-PROGRAM &lt;table-folder&gt; &lt;sql-json-file&gt; &lt;output-file&gt;
+</code></pre>
+<p>NOTE: In order to integrate with our scoring script YOUR-PROGRAM must be an executable file named <code>sql_evaluator</code>. The <code>sql_evaluator</code> file can either directly be your program executable or just a script that invokes your program (passing through commandline args as necessary). If it's a script ensure the proper <a href="https://en.wikipedia.org/wiki/Shebang_(Unix)">shebang</a> is set.</p>
+<p>Your program should:</p>
+<ol>
+<li>Load the <a href="#json-formatted-sql">JSON-formatted SQL</a> file (&quot;.sql.json&quot;).</li>
+<li>Load the <a href="#json-formatted-table">JSON-formatted tables</a> referenced by the query.  For example, the table &quot;countries&quot; should be loaded from &quot;&lt;table-folder&gt;/countries.table.json&quot;.</li>
+<li>If there is an error in the query, write an error message to the output file and exit.  You only need to report the first error; you can stop processing the query after that.</li>
+<li>If there are no errors, evaluate the query and write the result table to the output file.</li>
+</ol>
+<p>You can assume the JSON-formatted SQL and table files are syntactically valid.  However, you should detect logical errors in the queries, such as:</p>
+<ul>
+<li>References to column names or table names that don't exist.</li>
+<li>Ambiguous column references (the column name exists in multiple tables).</li>
+<li>Use of a comparison operator on incompatible types (string vs integer).</li>
+</ul>
+<p>You should perform the evaluation entirely in memory, using the standard data structures provided by your programming language.</p>
+<ul>
+<li>Avoid libraries that already implement a relational database, or a large subset of one; for example, do not use SQLite, Apache Derby, Pandas dataframes, etc.</li>
+<li>You can use external libraries to help with reading/writing JSON.</li>
+<li>We've provided starter code for several languages (see the &quot;starter-code&quot; folder), which you can use if you like.  Please include the starter code folder's &quot;version.txt&quot; in your submission.</li>
+</ul>
+<p>Be sure to read over the <a href="#evaluation-criteria">Evaluation Criteria</a> before submitting!</p>
+<h2 id="how-you-should-evaluate-an-sql-query">How you should evaluate an SQL query</h2>
+<p>Let's run through one of the examples, &quot;examples/simple-3.sql&quot;</p>
+<pre><code class="language-sql">SELECT
+    a1.name AS a1_name,
+    a1.age,
+    a2.name AS a2_name,
+    b.distance
+FROM
+    a AS a1,
+    a AS a2,
+    b
+WHERE
+    distance &gt; a2.age AND a1.name != &quot;Bob&quot;
+</code></pre>
+<p>Your program doesn't have to parse SQL directly.  We've provided a tool (<code>sql-to-json</code>) that converts <a href="#simplified-sql">our subset of SQL</a> into a <a href="#json-formatted-sql">JSON-based format</a> for your program to load.</p>
+<pre><code>$ ./sql-to-json examples/simple-3.sql  # writes to &quot;examples/simple-3.sql.json&quot;
+</code></pre>
+<p>(We've already pre-generated the &quot;.sql.json&quot; for all queries in the &quot;examples&quot; folder.  But if you want to create a new query or modify an existing one, you can write SQL and use <code>sql-to-json</code> to generate the JSON-formatted equivalent.)</p>
+<pre><code class="language-json">{
+    &quot;select&quot;: [
+        {&quot;name&quot;: &quot;a1_name&quot;, &quot;source&quot;: {&quot;name&quot;: &quot;name&quot;, &quot;table&quot;: &quot;a1&quot;}},
+        {&quot;name&quot;: &quot;age&quot;, &quot;source&quot;: {&quot;name&quot;: &quot;age&quot;, &quot;table&quot;: &quot;a1&quot;}},
+        {&quot;name&quot;: &quot;a2_name&quot;, &quot;source&quot;: {&quot;name&quot;: &quot;name&quot;, &quot;table&quot;: &quot;a2&quot;}},
+        {&quot;name&quot;: &quot;distance&quot;, &quot;source&quot;: {&quot;name&quot;: &quot;distance&quot;, &quot;table&quot;: &quot;b&quot;}}
+    ],
+    &quot;from&quot;: [
+        {&quot;name&quot;: &quot;a1&quot;, &quot;source&quot;: &quot;a&quot;},
+        {&quot;name&quot;: &quot;a2&quot;, &quot;source&quot;: &quot;a&quot;},
+        {&quot;name&quot;: &quot;b&quot;, &quot;source&quot;: &quot;b&quot;}
+    ],
+    &quot;where&quot;: [
+        {
+            &quot;op&quot;: &quot;&gt;&quot;,
+            &quot;left&quot;: {&quot;column&quot;: {&quot;name&quot;: &quot;distance&quot;, &quot;table&quot;: null}},
+            &quot;right&quot;: {&quot;column&quot;: {&quot;name&quot;: &quot;age&quot;, &quot;table&quot;: &quot;a2&quot;}}
+        },
+        {
+            &quot;op&quot;: &quot;!=&quot;,
+            &quot;left&quot;: {&quot;column&quot;: {&quot;name&quot;: &quot;name&quot;, &quot;table&quot;: &quot;a1&quot;}},
+            &quot;right&quot;: {&quot;literal&quot;: &quot;Bob&quot;}
+        }
+    ]
+}
+</code></pre>
+<p>Notice that all <code>select</code> and <code>from</code> entries have a <code>name</code>.  If the original SQL uses an <code>AS</code> clause, that is used as the <code>name</code>.  If not, <code>name</code> is automatically filled in based on the <code>source</code>.</p>
+<p>To run your program on this example, we'd do:</p>
+<pre><code>$ YOUR-PROGRAM examples examples/simple-3.sql.json examples/simple-3.out
+</code></pre>
+<p>First, your program should load all the tables listed in the <code>FROM</code>.  (The provided starter code already does this.)</p>
+<pre><code class="language-javascript">// examples/a.table.json
+[
+    [[&quot;name&quot;, &quot;str&quot;], [&quot;age&quot;, &quot;int&quot;]],
+    [&quot;Alice&quot;, 20],
+    [&quot;Bob&quot;, 30],
+    [&quot;Eve&quot;, 40]
+]
+
+// examples/b.table.json
+[
+    [[&quot;name&quot;, &quot;str&quot;], [&quot;distance&quot;, &quot;int&quot;]],
+    [&quot;Q&quot;, 25],
+    [&quot;R&quot;, 32]
+]
+</code></pre>
+<p>Before evaluating the query, validate it.  (This particular query does not have any errors, but see &quot;examples/error-*.sql&quot; for examples of queries with errors.)</p>
+<p>To evaluate the query, compute the cross-product (every combination of rows) of the tables in the <code>from</code> list:</p>
+<pre><code>|      a1     |      a2     |       b         |
+| name  | age | name  | age | name | distance |
+-----------------------------------------------
+| Alice | 20  | Alice | 20  | Q    | 25       |
+| Alice | 20  | Alice | 20  | R    | 32       |
+| Alice | 20  | Bob   | 30  | Q    | 25       |
+| Alice | 20  | Bob   | 30  | R    | 32       |
+| Alice | 20  | Eve   | 40  | Q    | 25       |
+| Alice | 20  | Eve   | 40  | R    | 32       |
+| Bob   | 30  | Alice | 20  | Q    | 25       |
+| Bob   | 30  | Alice | 20  | R    | 32       |
+| Bob   | 30  | Bob   | 30  | Q    | 25       |
+| Bob   | 30  | Bob   | 30  | R    | 32       |
+| Bob   | 30  | Eve   | 40  | Q    | 25       |
+| Bob   | 30  | Eve   | 40  | R    | 32       |
+| Eve   | 40  | Alice | 20  | Q    | 25       |
+| Eve   | 40  | Alice | 20  | R    | 32       |
+| Eve   | 40  | Bob   | 30  | Q    | 25       |
+| Eve   | 40  | Bob   | 30  | R    | 32       |
+| Eve   | 40  | Eve   | 40  | Q    | 25       |
+| Eve   | 40  | Eve   | 40  | R    | 32       |
+</code></pre>
+<p>Then, filter down to the rows that satisfy the <code>where</code> conditions:</p>
+<pre><code>|      a1     |      a2     |       b         |
+| name  | age | name  | age | name | distance |
+-----------------------------------------------
+| Alice | 20  | Alice | 20  | Q    | 25       |
+| Alice | 20  | Alice | 20  | R    | 32       |
+| Alice | 20  | Bob   | 30  | R    | 32       |
+| Eve   | 40  | Alice | 20  | Q    | 25       |
+| Eve   | 40  | Alice | 20  | R    | 32       |
+| Eve   | 40  | Bob   | 30  | R    | 32       |
+</code></pre>
+<p>Then, pull out the columns specified by the <code>SELECT</code>:</p>
+<pre><code>| a1_name | age | a2_name | distance |
+--------------------------------------
+| Alice   | 20  | Alice   | 25       |
+| Alice   | 20  | Alice   | 32       |
+| Alice   | 20  | Bob     | 32       |
+| Eve     | 40  | Alice   | 25       |
+| Eve     | 40  | Alice   | 32       |
+| Eve     | 40  | Bob     | 32       |
+</code></pre>
+<p>Then, write the JSON-formatted results to the output file, &quot;examples/simple-3.out&quot;:</p>
+<pre><code class="language-json">[
+    [[&quot;a1_name&quot;, &quot;str&quot;], [&quot;age&quot;, &quot;int&quot;], [&quot;a2_name&quot;, &quot;str&quot;], [&quot;distance&quot;, &quot;int&quot;]],
+    [&quot;Alice&quot;, 20, &quot;Alice&quot;, 25],
+    [&quot;Alice&quot;, 20, &quot;Alice&quot;, 32],
+    [&quot;Alice&quot;, 20, &quot;Bob&quot;, 32],
+    [&quot;Eve&quot;, 40, &quot;Alice&quot;, 25],
+    [&quot;Eve&quot;, 40, &quot;Alice&quot;, 32],
+    [&quot;Eve&quot;, 40, &quot;Bob&quot;, 32]
+]
+</code></pre>
+<p>Once your program finishes running, make sure the output matches the &quot;.expected&quot; output file we've provided, &quot;examples/simple-3.expected&quot;.</p>
+<ul>
+<li>The order of the columns matters.</li>
+<li>The order of the rows doesn't matter.</li>
+<li>The formatting doesn't matter as long as it's valid JSON.  (Our starter code knows how to write a table out with the same formatting as our examples.)</li>
+</ul>
+<p>We've provided another tool (<code>check</code>) to automate these steps.  It will:</p>
+<ol>
+<li>Convert the SQL file to a JSON-formatted SQL file.</li>
+<li>Run your program.</li>
+<li>Compare your program's output file to the expected output file.</li>
+</ol>
+<pre><code>$ ./check ./sql_evaluator -- &lt;table-folder&gt; &lt;sql-files...&gt;
+</code></pre>
+<p>To run against all the example queries:</p>
+<pre><code>$ ./check ./sql_evaluator -- examples examples/*.sql
+</code></pre>
+<h2 id="evaluation-criteria">Evaluation Criteria</h2>
+<ul>
+<li><strong>Above all else</strong>, we're looking for clean code: correct, easy to understand, and easy to maintain.</li>
+<li>Stick to the overall structure of the cross-product technique outlined above.  Do not add optimizations like pre-filtering tables, pre-projecting columns, indexes, multi-threading, cross-product reordering, etc.</li>
+<li>Within the cross-product framework, the code should still be efficient.  Don't worry about profiling and measuring microseconds, but don't just throw away CPU or memory doing redundant work.</li>
+<li>Assume that the normal use case involves loading the tables once and then evaluating many different queries.  (Your program doesn't <em>actually</em> do this, but use this model when thinking about efficiency.)</li>
+</ul>
+<p>To allow focusing on the above priorities, we're explicitly excluding a few things from the evaluation criteria:</p>
+<ul>
+<li>Feel free to write any tests you need to gain confidence in your code, but we won't be looking at them at all.</li>
+<li>Don't worry about extensibility beyond the requirements given here.  For example, don't worry about handling other SQL features, other SQL data types, non-read-only tables, etc.</li>
+<li>We care about how your code is decomposed into functions and classes, but all your validation and evaluation code can be in one file, if that makes things easier.</li>
+</ul>
+<p>When you submit your code, <strong>you must include a ReadMe text file</strong> with:</p>
+<ul>
+<li>Instructions on how to run your code.</li>
+<li>A brief explanation of any interesting choices you made in the design or implementation.</li>
+</ul>
+<h2 id="submitting-assignment">Submitting assignment</h2>
+<ol>
+<li>Make sure all of your changes are pushed to the git remote.</li>
+<li>Press the &quot;Submit&quot; button which will take you to the questions overview page.</li>
+<li>Press the &quot;Submit Test&quot; button.</li>
+</ol>
+<p><strong>Your code does NOT need to run in the HackerRank environment (e.g. using the &quot;Run Tests&quot; button).</strong></p>
+<p>If you have issues submitting through HackerRank you can email your recruiter a <code>.zip</code> of your submission.</p>
+<p>NOTE: The following files are READ ONLY and should not be edited. The upstream git remote will reject any commits with changes to these files, so make sure they are not modified in any commits.</p>
+<ul>
+<li>hackerrank.yml</li>
+<li>score.sh</li>
+<li>version.txt</li>
+<li>Instructions.html</li>
+<li>Instructions.md</li>
+<li>check</li>
+<li>sql-to-json</li>
+<li>examples/*.json</li>
+<li>examples/*.expected</li>
+<li>examples/*.sql</li>
+</ul>
+<h2 id="file-formats">File Formats</h2>
+<h3 id="simplified-sql">Simplified SQL</h3>
+<p>(You don't have to write a parser for this syntax.  The included <code>sql-to-json</code> tool will convert this syntax to a JSON-formatted equivalent.)</p>
+<pre><code>Query =
+    &quot;SELECT&quot; Selector ( &quot;,&quot; Selector )*
+    &quot;FROM&quot; TableDecl ( &quot;,&quot; TableDecl )*
+    ( &quot;WHERE&quot; Comparison ( &quot;AND&quot; Comparison )* )?
+
+Selector = ColumnRef ( &quot;AS&quot; &lt;identifier&gt; )?
+
+TableDecl = &lt;identifier&gt; ( &quot;AS&quot; &lt;identifier&gt; )?
+
+Comparison = Term ( &quot;=&quot; | &quot;!=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;&lt;&quot; | &quot;&lt;=&quot; ) Term
+
+Term = ColumnRef | &lt;string-literal&gt; | &lt;integer-literal&gt;
+
+ColumnRef = &lt;identifier&gt; ( &quot;.&quot; &lt;identifier&gt; )?
+</code></pre>
+<p>Comments start with &quot;--&quot; and go to the end of the line.</p>
+<p>Joins are performed using <a href="https://en.wikipedia.org/wiki/Join_(SQL)#Inner_join">implicit cross-join notation</a>.</p>
+<h3 id="json-formatted-sql">JSON-formatted SQL</h3>
+<pre><code>Query = {
+    select: Array&lt;Selector&gt;  // non-empty array
+    from: Array&lt;TableDecl&gt;  // non-empty array
+    where: Array&lt;Comparison&gt;
+}
+
+Selector = {
+    name: string  // filled in by 'sql-to-json' from the 'AS' or the 'source'
+    source: ColumnRef
+}
+
+TableDecl = {
+    name: string  // filled in by 'sql-to-json' from the 'AS' or the 'source'
+    source: string  // the file to load (without the &quot;.table.json&quot; extension)
+}
+
+Comparison = {
+    op: &quot;=&quot; | &quot;!=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot; | &quot;&lt;&quot; | &quot;&lt;=&quot;
+    left: Term
+    right: Term
+}
+
+Term = {column: ColumnRef} | {literal: int | string}
+
+ColumnRef = {
+    name: string
+    table: string | null  // non-null for fully-qualified ColumnRefs (&quot;table1.column2&quot;)
+}
+</code></pre>
+<h3 id="json-formatted-table">JSON-formatted Table</h3>
+<p>Each &quot;.table.json&quot; file is a JSON array.  The first element is a list of column definitions.  Each column definition is a pair where the first element is the column name and the second element is the column type (either &quot;str&quot; or &quot;int&quot;).</p>
+<p>The rest of the elements are the table's rows.  Each cell value will be either a string or an integer, depending on the columnn type.</p>
+
+</body>
+</html>

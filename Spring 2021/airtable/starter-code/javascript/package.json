@@ -1,0 +1,11 @@
+{
+    "name": "sql-evaluator",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "lint": "eslint \"src/**\""
+    },
+    "devDependencies": {
+        "eslint": "7.9.0"
+    }
+}

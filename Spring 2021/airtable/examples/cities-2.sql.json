@@ -1,0 +1,23 @@
+{
+    "select": [
+        {"name": "name", "source": {"name": "name", "table": "cities"}},
+        {"name": "country", "source": {"name": "country", "table": null}},
+        {"name": "population", "source": {"name": "population", "table": null}}
+    ],
+    "from": [
+        {"name": "countries", "source": "countries"},
+        {"name": "cities", "source": "cities"}
+    ],
+    "where": [
+        {
+            "op": "=",
+            "left": {"column": {"name": "capital", "table": null}},
+            "right": {"column": {"name": "name", "table": "cities"}}
+        },
+        {
+            "op": "!=",
+            "left": {"column": {"name": "country", "table": null}},
+            "right": {"literal": "India"}
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "select": [
+        {"name": "name", "source": {"name": "name", "table": null}},
+        {"name": "population", "source": {"name": "population", "table": null}}
+    ],
+    "from": [
+        {"name": "cities", "source": "cities"}
+    ],
+    "where": [
+        {
+            "op": "=",
+            "left": {"column": {"name": "country", "table": null}},
+            "right": {"literal": "Japan"}
+        },
+        {
+            "op": ">",
+            "left": {"column": {"name": "population", "table": null}},
+            "right": {"literal": 8000}
+        }
+    ]
+}

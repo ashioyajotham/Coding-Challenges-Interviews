@@ -1,0 +1,7 @@
+[
+    [["name", "str"], ["capital", "str"]],
+    ["USA", "Washington DC"],
+    ["Canada", "Ottawa"],
+    ["India", "Delhi"],
+    ["Japan", "Tokyo"]
+]

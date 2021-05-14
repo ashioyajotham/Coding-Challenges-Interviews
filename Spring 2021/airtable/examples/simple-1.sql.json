@@ -1,0 +1,13 @@
+{
+    "select": [
+        {"name": "a_name", "source": {"name": "name", "table": "a"}},
+        {"name": "age", "source": {"name": "age", "table": null}},
+        {"name": "b_name", "source": {"name": "name", "table": "b"}},
+        {"name": "distance", "source": {"name": "distance", "table": null}}
+    ],
+    "from": [
+        {"name": "a", "source": "a"},
+        {"name": "b", "source": "b"}
+    ],
+    "where": []
+}

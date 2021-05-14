@@ -1,0 +1,35 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css"/>
+    <style>
+    .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+        .markdown-body {
+            padding: 15px;
+        }
+    }
+    </style>
+</head>
+<body class="markdown-body">
+<h1 id="sql-evaluator-starter-code-for-python-3-8-with-static-types">SQL Evaluator - Starter code for Python 3.8+ (with static types)</h1>
+<p>To install Mypy and use it to type check:</p>
+<pre><code>python3 -m pip install mypy
+python3 -m mypy .
+</code></pre>
+<p>To run:</p>
+<pre><code>python3 sql_evaluator.py ../../examples ../../examples/cities-2.sql.json out.txt
+cat out.txt
+</code></pre>
+<p>To test against all the examples using the &quot;check&quot; tool:</p>
+<pre><code>../../check python3 sql_evaluator.py -- ../../examples ../../examples/*.sql
+</code></pre>
+
+</body>
+</html>

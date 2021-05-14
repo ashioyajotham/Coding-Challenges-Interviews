@@ -1,0 +1,7 @@
+[
+    [["name","str"],["country","str"],["population","int"]],
+    ["Canada","Canada",934],
+    ["India","India",11034],
+    ["USA","USA",681],
+    ["Japan","Japan",13513]
+]

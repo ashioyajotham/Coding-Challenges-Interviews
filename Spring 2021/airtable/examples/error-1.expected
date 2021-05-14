@@ -1,0 +1,1 @@
+ERROR: Column reference "name" is ambiguous; present in multiple tables: "countries", "cities".

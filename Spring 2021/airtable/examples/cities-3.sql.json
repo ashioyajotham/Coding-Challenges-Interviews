@@ -1,0 +1,27 @@
+{
+    "select": [
+        {"name": "name", "source": {"name": "name", "table": "others"}}
+    ],
+    "from": [
+        {"name": "countries", "source": "countries"},
+        {"name": "capitals", "source": "cities"},
+        {"name": "others", "source": "cities"}
+    ],
+    "where": [
+        {
+            "op": "=",
+            "left": {"column": {"name": "capital", "table": "countries"}},
+            "right": {"column": {"name": "name", "table": "capitals"}}
+        },
+        {
+            "op": "=",
+            "left": {"column": {"name": "name", "table": "countries"}},
+            "right": {"column": {"name": "country", "table": "others"}}
+        },
+        {
+            "op": ">",
+            "left": {"column": {"name": "population", "table": "others"}},
+            "right": {"column": {"name": "population", "table": "capitals"}}
+        }
+    ]
+}

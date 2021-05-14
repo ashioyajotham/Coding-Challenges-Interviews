@@ -1,0 +1,25 @@
+{
+    "select": [
+        {"name": "a1_name", "source": {"name": "name", "table": "a1"}},
+        {"name": "age", "source": {"name": "age", "table": "a1"}},
+        {"name": "a2_name", "source": {"name": "name", "table": "a2"}},
+        {"name": "distance", "source": {"name": "distance", "table": "b"}}
+    ],
+    "from": [
+        {"name": "a1", "source": "a"},
+        {"name": "a2", "source": "a"},
+        {"name": "b", "source": "b"}
+    ],
+    "where": [
+        {
+            "op": ">",
+            "left": {"column": {"name": "distance", "table": null}},
+            "right": {"column": {"name": "age", "table": "a2"}}
+        },
+        {
+            "op": "!=",
+            "left": {"column": {"name": "name", "table": "a1"}},
+            "right": {"literal": "Bob"}
+        }
+    ]
+}
